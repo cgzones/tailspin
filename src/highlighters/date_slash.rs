@@ -36,43 +36,37 @@ impl Highlight for DateSlashHighlighter {
 
     fn apply(&self, input: &str) -> String {
         let step1 = DATE_REGEX_1.replace_all(input, |caps: &Captures<'_>| {
-            let year = caps.name("year").map(|m| m.as_str());
-            let month = caps.name("month").map(|m| m.as_str());
-            let day = caps.name("day").map(|m| m.as_str());
-            let separator1 = caps.name("separator1").map(|m| m.as_str());
-            let separator2 = caps.name("separator2").map(|m| m.as_str());
+            let year = &caps["year"];
+            let month = &caps["month"];
+            let day = &caps["day"];
+            let separator1 = &caps["separator1"];
+            let separator2 = &caps["separator2"];
 
-            match (year, month, day, separator1, separator2) {
-                (Some(y), Some(mo), Some(d), Some(s1), Some(s2)) => format!(
-                    "{}{}{}{}{}",
-                    self.number.paint(y),
-                    self.separator.paint(s1),
-                    self.number.paint(mo),
-                    self.separator.paint(s2),
-                    self.number.paint(d)
-                ),
-                _ => input.to_string(),
-            }
+            format!(
+                "{}{}{}{}{}",
+                self.number.paint(year),
+                self.separator.paint(separator1),
+                self.number.paint(month),
+                self.separator.paint(separator2),
+                self.number.paint(day)
+            )
         });
 
         let step2 = DATE_REGEX_2.replace_all(&step1, |caps: &Captures<'_>| {
-            let day = caps.name("day").map(|m| m.as_str());
-            let month = caps.name("month").map(|m| m.as_str());
-            let year = caps.name("year").map(|m| m.as_str());
-            let separator1 = caps.name("separator1").map(|m| m.as_str());
-            let separator2 = caps.name("separator2").map(|m| m.as_str());
+            let day = &caps["day"];
+            let month = &caps["month"];
+            let year = &caps["year"];
+            let separator1 = &caps["separator1"];
+            let separator2 = &caps["separator2"];
 
-            match (day, month, year, separator1, separator2) {
-                (Some(d), Some(mo), Some(y), Some(s1), Some(s2)) => format!(
-                    "{}{}{}{}{}",
-                    self.number.paint(d),
-                    self.separator.paint(s1),
-                    self.number.paint(mo),
-                    self.separator.paint(s2),
-                    self.number.paint(y)
-                ),
-                _ => input.to_string(),
-            }
+            format!(
+                "{}{}{}{}{}",
+                self.number.paint(day),
+                self.separator.paint(separator1),
+                self.number.paint(month),
+                self.separator.paint(separator2),
+                self.number.paint(year)
+            )
         });
 
         step2.to_string()

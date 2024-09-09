@@ -122,7 +122,7 @@ fn map_to_color_or_exit_early(color: &str) -> Color {
         "yellow" => Ok(Color::Yellow),
         "blue" => Ok(Color::Blue),
         "magenta" => Ok(Color::Magenta),
-        "purple" => Ok(Color::Magenta),
+        "purple" => Ok(Color::Purple),
         "cyan" => Ok(Color::Cyan),
         "white" => Ok(Color::White),
         "black" => Ok(Color::Black),

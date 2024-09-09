@@ -13,7 +13,7 @@ static TIME_REGEX: Lazy<Regex> = Lazy::new(|| {
             (?P<minutes>\d{2})(?P<colon2>:)
             (?P<seconds>\d{2})
             (?P<frac_sep>[.,:])?(?P<frac_digits>\d+)?  # Capture fractional seconds (separator and digits separately)
-            (?P<tz>Z)?                                 # Capture timezone (Z)
+            (?P<tz>(Z|\s*(?:\+|-)\d{2}(?::?\d{2})?))?  # Capture timezone (Z)
     ",
     )
     .expect("Invalid regex pattern")

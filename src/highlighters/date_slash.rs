@@ -4,9 +4,14 @@ use nu_ansi_term::Style;
 use once_cell::sync::Lazy;
 use regex::{Captures, Regex};
 
-static DATE_REGEX: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"(?P<year>20\d{2})(?P<separator1>/)(?P<month>(0[1-9]|1[0-2]))(?P<separator2>/)(?P<day>(0[1-9]|[12][0-9]|3[01]))")
+static DATE_REGEX_1: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"(?P<year>20\d{2})(?P<separator1>/)(?P<month>(?:0[1-9]|1[0-2]))(?P<separator2>/)(?P<day>(?:0[1-9]|[12][0-9]|3[01]))")
         .expect("Invalid regex pattern")
+});
+
+static DATE_REGEX_2: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"(?P<day>(?:0[1-9]|[12][0-9]|3[01]))(?P<separator1>/)(?P<month>(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))(?P<separator2>/)(?P<year>20\d{2})")
+    .expect("Regex is valid")
 });
 
 pub struct DateSlashHighlighter {
@@ -30,26 +35,46 @@ impl Highlight for DateSlashHighlighter {
     }
 
     fn apply(&self, input: &str) -> String {
-        DATE_REGEX
-            .replace_all(input, |caps: &Captures<'_>| {
-                let year = caps.name("year").map(|m| m.as_str());
-                let month = caps.name("month").map(|m| m.as_str());
-                let day = caps.name("day").map(|m| m.as_str());
-                let separator1 = caps.name("separator1").map(|m| m.as_str());
-                let separator2 = caps.name("separator2").map(|m| m.as_str());
+        let step1 = DATE_REGEX_1.replace_all(input, |caps: &Captures<'_>| {
+            let year = caps.name("year").map(|m| m.as_str());
+            let month = caps.name("month").map(|m| m.as_str());
+            let day = caps.name("day").map(|m| m.as_str());
+            let separator1 = caps.name("separator1").map(|m| m.as_str());
+            let separator2 = caps.name("separator2").map(|m| m.as_str());
 
-                match (year, month, day, separator1, separator2) {
-                    (Some(y), Some(mo), Some(d), Some(s1), Some(s2)) => format!(
-                        "{}{}{}{}{}",
-                        self.number.paint(y),
-                        self.separator.paint(s1),
-                        self.number.paint(mo),
-                        self.separator.paint(s2),
-                        self.number.paint(d)
-                    ),
-                    _ => input.to_string(),
-                }
-            })
-            .to_string()
+            match (year, month, day, separator1, separator2) {
+                (Some(y), Some(mo), Some(d), Some(s1), Some(s2)) => format!(
+                    "{}{}{}{}{}",
+                    self.number.paint(y),
+                    self.separator.paint(s1),
+                    self.number.paint(mo),
+                    self.separator.paint(s2),
+                    self.number.paint(d)
+                ),
+                _ => input.to_string(),
+            }
+        });
+
+        let step2 = DATE_REGEX_2.replace_all(&step1, |caps: &Captures<'_>| {
+            let day = caps.name("day").map(|m| m.as_str());
+            let month = caps.name("month").map(|m| m.as_str());
+            let year = caps.name("year").map(|m| m.as_str());
+            let separator1 = caps.name("separator1").map(|m| m.as_str());
+            let separator2 = caps.name("separator2").map(|m| m.as_str());
+
+            match (day, month, year, separator1, separator2) {
+                (Some(d), Some(mo), Some(y), Some(s1), Some(s2)) => format!(
+                    "{}{}{}{}{}",
+                    self.number.paint(d),
+                    self.separator.paint(s1),
+                    self.number.paint(mo),
+                    self.separator.paint(s2),
+                    self.number.paint(y)
+                ),
+                _ => input.to_string(),
+            }
+        });
+
+        step2.to_string()
     }
 }

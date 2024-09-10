@@ -1,4 +1,4 @@
-use std::net::Ipv6Addr;
+use std::{borrow::Cow, net::Ipv6Addr};
 
 use crate::line_info::LineInfo;
 use crate::types::Highlight;
@@ -34,22 +34,20 @@ impl Highlight for Ipv6Highlighter {
         true
     }
 
-    fn apply(&self, input: &str) -> String {
+    fn apply<'a>(&self, input: &'a str) -> Cow<'a, str> {
         let mut b = [0; 2];
 
-        IPV6_REGEX
-            .replace_all(input, |caps: &Captures<'_>| match caps[0].parse::<Ipv6Addr>() {
-                Ok(_ip) => caps[0]
-                    .chars()
-                    .map(|c| match c {
-                        '0'..='9' => self.number.paint(c.encode_utf8(&mut b) as &str).to_string(),
-                        'a'..='f' | 'A'..='F' => self.letter.paint(c.encode_utf8(&mut b) as &str).to_string(),
-                        ':' | '.' => self.separator.paint(c.encode_utf8(&mut b) as &str).to_string(),
-                        _ => c.to_string(),
-                    })
-                    .collect::<String>(),
-                Err(_err) => caps[0].to_string(),
-            })
-            .to_string()
+        IPV6_REGEX.replace_all(input, |caps: &Captures<'_>| match caps[0].parse::<Ipv6Addr>() {
+            Ok(_ip) => caps[0]
+                .chars()
+                .map(|c| match c {
+                    '0'..='9' => self.number.paint(c.encode_utf8(&mut b) as &str).to_string(),
+                    'a'..='f' | 'A'..='F' => self.letter.paint(c.encode_utf8(&mut b) as &str).to_string(),
+                    ':' | '.' => self.separator.paint(c.encode_utf8(&mut b) as &str).to_string(),
+                    _ => c.to_string(),
+                })
+                .collect::<String>(),
+            Err(_err) => caps[0].to_string(),
+        })
     }
 }

@@ -1,17 +1,17 @@
+use std::borrow::Cow;
+
 use crate::line_info::LineInfo;
 use crate::types::Highlight;
 use nu_ansi_term::Style;
 use once_cell::sync::Lazy;
 use regex::{Captures, Regex};
 
-static DATE_REGEX_1: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"(?P<year>20\d{2})(?P<separator1>/)(?P<month>(?:0[1-9]|1[0-2]))(?P<separator2>/)(?P<day>(?:0[1-9]|[12][0-9]|3[01]))")
-        .expect("Invalid regex pattern")
-});
-
-static DATE_REGEX_2: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"(?P<day>(?:0[1-9]|[12][0-9]|3[01]))(?P<separator1>/)(?P<month>(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))(?P<separator2>/)(?P<year>20\d{2})")
-    .expect("Regex is valid")
+static DATE_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"(?ix)
+                   \b(?P<yearA>20\d{2})(?P<separatorA1>/)(?P<monthA>(?:0[1-9]|1[0-2]))(?P<separatorA2>/)(?P<dayA>(?:0[1-9]|[12][0-9]|3[01]))\b
+                   |
+                   \b(?P<dayB>(?:0[1-9]|[12][0-9]|3[01]))(?P<separatorB1>/)(?P<monthB>(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))(?P<separatorB2>/)(?P<yearB>20\d{2})\b")
+    .expect("Invalid regex pattern")
 });
 
 pub struct DateSlashHighlighter {
@@ -34,13 +34,33 @@ impl Highlight for DateSlashHighlighter {
         true
     }
 
-    fn apply(&self, input: &str) -> String {
-        let step1 = DATE_REGEX_1.replace_all(input, |caps: &Captures<'_>| {
-            let year = &caps["year"];
-            let month = &caps["month"];
-            let day = &caps["day"];
-            let separator1 = &caps["separator1"];
-            let separator2 = &caps["separator2"];
+    fn apply<'a>(&self, input: &'a str) -> Cow<'a, str> {
+        DATE_REGEX.replace_all(input, |caps: &Captures<'_>| {
+            let year = caps
+                .name("yearA")
+                .or_else(|| caps.name("yearB"))
+                .expect("Either regex branch must have been matched")
+                .as_str();
+            let month = caps
+                .name("monthA")
+                .or_else(|| caps.name("monthB"))
+                .expect("Either regex branch must have been matched")
+                .as_str();
+            let day = caps
+                .name("dayA")
+                .or_else(|| caps.name("dayB"))
+                .expect("Either regex branch must have been matched")
+                .as_str();
+            let separator1 = caps
+                .name("separatorA1")
+                .or_else(|| caps.name("separatorB1"))
+                .expect("Either regex branch must have been matched")
+                .as_str();
+            let separator2 = caps
+                .name("separatorA2")
+                .or_else(|| caps.name("separatorB2"))
+                .expect("Either regex branch must have been matched")
+                .as_str();
 
             format!(
                 "{}{}{}{}{}",
@@ -50,25 +70,6 @@ impl Highlight for DateSlashHighlighter {
                 self.separator.paint(separator2),
                 self.number.paint(day)
             )
-        });
-
-        let step2 = DATE_REGEX_2.replace_all(&step1, |caps: &Captures<'_>| {
-            let day = &caps["day"];
-            let month = &caps["month"];
-            let year = &caps["year"];
-            let separator1 = &caps["separator1"];
-            let separator2 = &caps["separator2"];
-
-            format!(
-                "{}{}{}{}{}",
-                self.number.paint(day),
-                self.separator.paint(separator1),
-                self.number.paint(month),
-                self.separator.paint(separator2),
-                self.number.paint(year)
-            )
-        });
-
-        step2.to_string()
+        })
     }
 }

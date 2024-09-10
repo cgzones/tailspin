@@ -19,8 +19,22 @@ strip = true
 codegen-units = 1
 panic = 'abort'
 
+[lints.rust]
+unsafe_code = "forbid"
+
 [lints.clippy]
 missing-const-for-fn = "deny"
+mut_mut = "deny"
+similar_names = "deny"
+unicode_not_nfc = "deny"
+enum_glob_use = "deny"
+if_not_else = "deny"
+items_after_statements = "deny"
+used_underscore_binding = "deny"
+panic = "deny"
+cast_possible_wrap = "deny"
+cast_possible_truncation = "deny"
+cast_sign_loss = "deny"
 
 [dependencies]
 async-trait = "0.1.81"
